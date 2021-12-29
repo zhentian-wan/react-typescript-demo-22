@@ -14,9 +14,25 @@ const initialContext = {
 	initialized: false,
 };
 
-// type GameState = "idle" | "active" | "won" | "lost";
-
-function reducer(context, event) {
+interface BoardConfig {
+	rows: number;
+	columns: number;
+	mines: number;
+}
+type GameState = "idle" | "active" | "won" | "lost";
+interface BoardContext {
+	gameState: GameState;
+	cells: Cell[];
+	mines: number[];
+	initialized: boolean;
+}
+type BoardEvent =
+	| { type: "RESET"; board: BoardConfig }
+	| { type: "REVEAL_CELL"; board: BoardConfig; index: number }
+	| { type: "REVEAL_ADJACENT_CELLS"; board: BoardConfig; index: number }
+	| { type: "MARK_CELL"; index: number }
+	| { type: "MARK_REMAINING_MINES"; board: BoardConfig };
+function reducer(context: BoardContext, event: BoardEvent): BoardContext {
 	if (event.type === "RESET") {
 		return {
 			...context,
@@ -249,12 +265,14 @@ const Board = ({ board = presets.Beginner }) => {
 
 	let remainingMineCount = getRemainingMineCount(cells, board.mines);
 
-	let rowArray = React.useMemo(
+	// TODO
+	let rowArray = React.useMemo<null[]>(
 		() => Array(board.rows).fill(null),
 		[board.rows]
 	);
+	//TODO
 	let getColumnArray = React.useCallback(
-		(rowIndex) =>
+		(rowIndex: number): Cell[] =>
 			cells.slice(
 				board.columns * rowIndex,
 				board.columns * rowIndex + board.columns
@@ -363,7 +381,8 @@ const GridCell = ({
 }) => {
 	let gameIsOver = gameState === "won" || gameState === "lost";
 	let isRevealed = status === "exploded" || status === "revealed";
-	let ref = React.useRef(null);
+	// TODO
+	let ref = React.useRef<HTMLButtonElement>(null);
 
 	return (
 		<div
@@ -558,7 +577,14 @@ function getCellCount(board) {
  * @param {number[]} [mines]
  * @returns {Cell[]}
  */
-function createCells(board, mines) {
+function createCells(
+	board: {
+		rows: number;
+		columns: number;
+		mines: number;
+	},
+	mines?: number[]
+): Cell[] {
 	return Array(getCellCount(board))
 		.fill(null)
 		.map((_, index) => {
@@ -736,8 +762,8 @@ function getTotalRevealedCells(cells) {
  * @param {"idle" | "active" | "won" | "lost"} gameState
  * @returns {[number, () => void]}
  */
-function useTimer(gameState) {
-	let [timeElapsed, setTimeElapsed] = React.useState(0);
+function useTimer(gameState): [number, () => void] {
+	let [timeElapsed, setTimeElapsed] = React.useState<number>(0);
 	React.useEffect(() => {
 		if (gameState === "active") {
 			let id = window.setInterval(() => {
